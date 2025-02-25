@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post a Job</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #007BFF;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        select, input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .dropdown-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .dropdown-container > div {
+            flex: 1 1 30%;
+        }
+        #countDisplay {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007BFF;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .navbar {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .logout-btn {
+            margin-left: auto;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+    </style>
+
+    <!-- jQuery Library -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    
+    <!-- Select2 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    
+    <!-- Select2 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">MyApp</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="job-data.html">My Jobs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="job_post.html">Job Post</a>
+                </li>
+               
+            </ul>
+            <button class="btn btn-outline-danger logout-btn" onclick="handleLogout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1>Post a New Job</h1>
+        <form id="jobPostForm">
+            <div class="form-group">
+                <label for="title">Job Title*</label>
+                <input type="text" class="form-control" id="title" name="title" required>
+            </div>
+
+            <div class="form-group">
+                <label for="company">Company Name*</label>
+                <input type="text" class="form-control" id="company" name="company" required>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Location*</label>
+                <input type="text" class="form-control" id="location" name="location" required>
+            </div>
+
+            <div class="form-group">
+                <label for="job_type">Job Type*</label>
+                <select class="form-control" id="job_type" name="job_type" required>
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time">Part-time</option>
+                    <option value="Contract">Contract</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="salary_range">Salary Range</label>
+                <input type="text" class="form-control" id="salary_range" name="salary_range" 
+                       placeholder="e.g., $50,000 - $70,000">
+            </div>
+
+            <div class="form-group">
+                <label for="description">Job Description*</label>
+                <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="requirements">Requirements</label>
+                <textarea class="form-control" id="requirements" name="requirements" rows="5"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="deadline">Application Deadline</label>
+                <input type="date" class="form-control" id="deadline" name="deadline">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Post Job</button>
+        </form>
+    </div>
+
+    <script>
+        // Function to clear the token and redirect to login page
+        function clearTokenAndRedirect() {
+            localStorage.removeItem('bearerToken');
+            console.log("Token removed and redirecting to login page");
+            window.location.href = 'login.html';
+        }
+
+        // Handle logout
+        function handleLogout() {
+            console.log("Logout button clicked");
+            clearTokenAndRedirect();
+        }
+
+        $(document).ready(function() {
+            $('#jobPostForm').on('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    title: $('#title').val(),
+                    company: $('#company').val(),
+                    location: $('#location').val(),
+                    job_type: $('#job_type').val(),
+                    salary_range: $('#salary_range').val(),
+                    description: $('#description').val(),
+                    requirements: $('#requirements').val(),
+                    deadline: $('#deadline').val()
+                };
+
+                try {
+                    const token = localStorage.getItem('bearerToken');
+                    const response = await fetch('http://127.0.0.1:8000/api/jobs/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (response.status === 401) {
+                        clearTokenAndRedirect();
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const result = await response.json();
+                    alert('Job posted successfully!');
+                    window.location.href = 'job-data.html'; // Redirect to jobs list
+                } catch (error) {
+                    console.error('Error posting job:', error);
+                    alert('Error posting job. Please try again.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

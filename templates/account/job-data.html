@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV File Upload with Progress Bar</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+        }
+        h2 {
+            color: #333;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        #upload-form {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin-top: 50px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        input[type="file"] {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 30px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        button[disabled] {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        button.loading::after {
+            content: ' ...';
+            animation: ellipsis 1s infinite;
+        }
+        @keyframes ellipsis {
+            0% { content: ' ...'; }
+            33% { content: ' ..'; }
+            66% { content: ' .'; }
+            100% { content: ' ...'; }
+        }
+        #progress-wrapper {
+            width: 100%;
+            max-width: 400px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+            display: none;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #progress-bar {
+            width: 0%;
+            height: 22px;
+            background-color: #28a745;
+            text-align: center;
+            line-height: 22px;
+            color: white;
+            border-radius: 10px;
+            transition: width 0.4s ease;
+        }
+        #upload-message {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #333;
+            text-align: center;
+        }
+
+        .navbar {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .logout-btn {
+            margin-left: auto;
+        }
+
+        .jobs-container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .jobs-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .job-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .job-title {
+            font-size: 1.2rem;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+
+        .job-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .apply-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .applied-badge {
+            background-color: #17a2b8;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        #applicationModal .modal-body {
+            padding: 20px;
+        }
+
+        .status-pending { background-color: #ffc107; }
+        .status-accepted { background-color: #28a745; }
+        .status-rejected { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Job Portal</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="job-data.html">My Jobs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="job_post.html">Job Post</a>
+                </li>
+               
+            </ul>
+            <button class="btn btn-outline-danger logout-btn" onclick="handleLogout()">Logout</button>
+        </div>
+    </nav>
+   
+    <div id="progress-wrapper">
+        <div id="progress-bar">0%</div>
+    </div>
+    <div id="upload-message"></div>
+
+    <div class="jobs-container">
+        <!-- Available Jobs Section -->
+        <div class="jobs-section">
+            <h2>Available Jobs</h2>
+            <div id="available-jobs">
+                <!-- Jobs will be populated here -->
+            </div>
+        </div>
+
+        <!-- My Applications Section -->
+        <div class="jobs-section">
+            <h2>My Applications</h2>
+            <div id="my-applications">
+                <!-- Applications will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Modal -->
+    <div class="modal fade" id="applicationModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Apply for Job</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="applicationForm">
+                        <input type="hidden" id="jobId">
+                        <div class="form-group">
+                            <label for="coverLetter">Cover Letter</label>
+                            <textarea class="form-control" id="coverLetter" rows="5" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="resume">Resume (Optional)</label>
+                            <input type="file" class="form-control" id="resume">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Application</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to clear the token and redirect to login page
+        function clearTokenAndRedirect() {
+            localStorage.removeItem('bearerToken');
+            console.log("Token removed and redirecting to login page");
+            window.location.href = 'login.html';
+        }
+    
+        // Handle logout
+        function handleLogout() {
+            console.log("Logout button clicked");
+            clearTokenAndRedirect();
+        }
+    
+        const MAX_RETRIES = 3;
+    
+        function uploadFile(retryCount = 0) {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            const uploadButton = document.getElementById('upload-button');
+            const progressWrapper = document.getElementById('progress-wrapper');
+            const progressBar = document.getElementById('progress-bar');
+            const uploadMessage = document.getElementById('upload-message');
+            const token = localStorage.getItem('bearerToken'); // Get the bearer token from local storage
+    
+            if (!file) {
+                alert('Please select a file to upload.');
+                return;
+            }
+    
+            if (file.type !== 'text/csv' && file.name.split('.').pop().toLowerCase() !== 'csv') {
+                alert('Only CSV files are allowed.');
+                return;
+            }
+    
+            const formData = new FormData();
+            formData.append('file', file);
+    
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'http://127.0.0.1:8000/api/upload/', true);
+    
+            // Add bearer token to request headers if it exists
+            if (token) {
+                xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            } else {
+                // If no token, redirect to login page
+                clearTokenAndRedirect();
+                return;
+            }
+    
+            progressWrapper.style.display = 'block';
+            uploadButton.disabled = true;
+            uploadButton.classList.add('loading');
+    
+            xhr.upload.onprogress = function(event) {
+                if (event.lengthComputable) {
+                    const percentComplete = (event.loaded / event.total) * 100;
+                    progressBar.style.width = percentComplete + '%';
+                    progressBar.textContent = Math.round(percentComplete) + '%';
+                }
+            };
+    
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    uploadMessage.textContent = 'File uploaded successfully!';
+                    resetUI();
+                } else if (xhr.status === 401) {
+                    // Handle 401 Unauthorized response
+                    clearTokenAndRedirect();
+                } else {
+                    if (retryCount < MAX_RETRIES) {
+                        retryUpload(retryCount);
+                    } else {
+                        uploadMessage.textContent = 'File upload failed after maximum retries.';
+                        resetUI();
+                    }
+                }
+            };
+    
+            xhr.onerror = function() {
+                if (retryCount < MAX_RETRIES) {
+                    retryUpload(retryCount);
+                } else {
+                    uploadMessage.textContent = 'Server unreachable. File upload failed.';
+                    resetUI();
+                }
+            };
+    
+            xhr.send(formData);
+        }
+    
+        function retryUpload(retryCount) {
+            setTimeout(() => {
+                console.log(`Retrying upload... Attempt ${retryCount + 1}`);
+                uploadFile(retryCount + 1);
+            }, 1000);
+        }
+    
+        function resetUI() {
+            const uploadButton = document.getElementById('upload-button');
+            const progressWrapper = document.getElementById('progress-wrapper');
+            const progressBar = document.getElementById('progress-bar');
+            const fileInput = document.getElementById('file-input');
+            const uploadMessage = document.getElementById('upload-message');
+    
+            uploadButton.disabled = false;
+            uploadButton.classList.remove('loading');
+            progressWrapper.style.display = 'none';
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            fileInput.value = '';
+        }
+
+        // Function to fetch and display available jobs
+        async function fetchJobs() {
+            try {
+                const token = localStorage.getItem('bearerToken');
+                const response = await fetch('http://127.0.0.1:8000/api/jobs/', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.status === 401) {
+                    clearTokenAndRedirect();
+                    return;
+                }
+
+                const jobs = await response.json();
+                const jobsContainer = document.getElementById('available-jobs');
+                jobsContainer.innerHTML = jobs.map(job => `
+                    <div class="job-card">
+                        <div class="job-title">${job.title}</div>
+                        <div class="job-details">
+                            <p>${job.description}</p>
+                            <p>Salary: ${job.salary}</p>
+                            <p>Location: ${job.location}</p>
+                        </div>
+                        <button class="apply-btn" onclick="openApplicationModal(${job.id})">
+                            Apply Now
+                        </button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error fetching jobs:', error);
+            }
+        }
+
+        // Function to fetch and display user's applications
+        async function fetchMyApplications() {
+            try {
+                const token = localStorage.getItem('bearerToken');
+                const response = await fetch('http://127.0.0.1:8000/api/applications/', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    clearTokenAndRedirect();
+                    return;
+                }
+
+                const applications = await response.json();
+                const applicationsContainer = document.getElementById('my-applications');
+                applicationsContainer.innerHTML = applications.map(app => `
+                    <div class="job-card">
+                        <div class="job-title">${app.job.title}</div>
+                        <div class="job-details">
+                            <p>Status: <span class="badge status-${app.status.toLowerCase()}">${app.status}</span></p>
+                            <p>Applied on: ${new Date(app.created_date).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error fetching applications:', error);
+            }
+        }
+
+        // Function to open application modal
+        function openApplicationModal(jobId) {
+            document.getElementById('jobId').value = jobId;
+            $('#applicationModal').modal('show');
+        }
+
+        // Handle application form submission
+        document.getElementById('applicationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = localStorage.getItem('bearerToken');
+            const jobId = document.getElementById('jobId').value;
+            const coverLetter = document.getElementById('coverLetter').value;
+            const resumeFile = document.getElementById('resume').files[0];
+
+            const formData = new FormData();
+            formData.append('job', jobId);
+            formData.append('cover_letter', coverLetter);
+            if (resumeFile) {
+                formData.append('resume', resumeFile);
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/applications/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    $('#applicationModal').modal('hide');
+                    fetchMyApplications();
+                    alert('Application submitted successfully!');
+                } else if (response.status === 401) {
+                    clearTokenAndRedirect();
+                } else {
+                    alert('Failed to submit application. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error submitting application:', error);
+                alert('Error submitting application. Please try again.');
+            }
+        });
+
+        // Load jobs and applications when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchJobs();
+            fetchMyApplications();
+        });
+    </script>
+    
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
